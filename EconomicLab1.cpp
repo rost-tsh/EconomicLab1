@@ -9,51 +9,56 @@
 using namespace std;
 
 const double PI = 3.141592653589793;
-const double a = -3, b = 3;
+const double A = -3, B = 3;
 const int N = 1000;
 const int M = 10000;
 
 double f(double x)
 {
-    return sin(x);
+    return 1 / sqrt(2 * PI) * exp(-x * x / 2);
 }
 
-double p(double x)
-{
-    return 1/sqrt(2 * PI) * exp(-pow(x,2)/2);
-}
-
-double CentralIntegral(double a, double b, int n)
+double CentralIntegral(double a, double b, double h)
 {
     double Integral = 0.0;
-    double h = (b - a) / n;
+    double n = (b - a) / h;
     for (int i = 1; i <= n; i++)
-        Integral = Integral + h * f(a + h * (i - 0.5));
-    
+        Integral += h * f(a + h * (i - 0.5));
+    return Integral;
 }
 
-double TrapezeIntegral(double a, double b, int n)
+double TrapezeIntegral(double a, double b, double h)
 {
-    double h = (b - a) / n;
+    double n = (b - a) / h;
     double Integral = h * (f(a) + f(b)) / 2.0;
     for (int i = 1; i <= n - 1; i++)
         Integral = Integral + h * f(a + h * i);
-    
+    return Integral;
 }
 
-double SympsonIntegral(double a, double b, int n)
+double SympsonIntegral(double a, double b, double h)
 {
-    double h = (b - a) / n;
+    double n = (b - a) / h;
     double Integral = h * (f(a) + f(b)) / 6.0;
     for (int i = 1; i <= n; i++)
         Integral = Integral + 4.0 / 6.0 * h * f(a + h * (i - 0.5));
     for (int i = 1; i <= n - 1; i++)
         Integral = Integral + 2.0 / 6.0 * h * f(a + h * i);
-    
+
+    return Integral;
 }
 
 double p(double x) {
     return 1 / sqrt(2 * PI) * exp(-x * x / 2);
+}
+
+double MinElem(double* L, int N) {
+    int min = 0;
+    for (int i = 1; i < N; i++)
+    {
+        if (L[min] > L[i]) min = i;
+    }
+    return L[min];
 }
 
 double *Generator1() {
@@ -62,7 +67,7 @@ double *Generator1() {
     random_device rd;
     mt19937 gen(rd());
     uniform_real_distribution<> dis(0.0, 1.00000000001);
-    for (int i = 0; i < M; i++) {
+    for (int i = 0; i < size(array); i++) {
         NewSv = 0;
         for (int i = 0; i < 12; i++) {
             NewSv += dis(gen);
@@ -73,14 +78,14 @@ double *Generator1() {
     return array;
 }
 
-double *Generator2() {
+double* Generator2() {
     static double array[M];
 
     random_device rd;
     mt19937 gen(rd());
     uniform_real_distribution<> dis(0.00000000001, 1.00000000001);
     double NewGr1, NewGr2;
-    for (int i = 0; i < M; i+=2) {
+    for (int i = 0; i < size(array); i+=2) {
         NewGr1 = dis(gen); NewGr2 = dis(gen);
         array[i] = cos(2 * PI * NewGr1) * sqrt(-2 * log(NewGr2));
         array[i + 1] = sin(2 * PI * NewGr1) * sqrt(-2 * log(NewGr2));
@@ -89,14 +94,14 @@ double *Generator2() {
     return array;
 }
 
-double *Generator3() {
+double* Generator3() {
     static double array[M];
     double s = 0.00000000001;
     random_device rd;
     mt19937 gen(rd());
-    uniform_real_distribution<> dis(0.00000000001, 1.00000000001);
+    uniform_real_distribution<> dis(-1, 1.00000000001);
     double NewGr1, NewGr2;
-    for (int i = 0; i < M; i += 2) {
+    for (int i = 0; i < size(array); i += 2) {
         NewGr1 = dis(gen); NewGr2 = dis(gen);
         if (NewGr1 != NewGr2) {
             s = NewGr1 * NewGr1 + NewGr2 * NewGr2;
@@ -118,7 +123,7 @@ double* Generator4(double phi) {
     mt19937 gen(rd());
     uniform_real_distribution<> dis(0.00000000001, 1.00000000001);
     double NewGr1, NewGr2;
-    for (int i = 0; i < M; i++) {
+    for (int i = 0; i < size(array); i++) {
         NewGr1 = dis(gen); NewGr2 = dis(gen);
         array[i] = sqrt(-2 * log(NewGr2) * cos(2 * PI * NewGr1 - phi));
     }
@@ -126,33 +131,33 @@ double* Generator4(double phi) {
 }
 
 double* GetProb(double* L) {
-    double h = (b - a) / N;
+    double h = (B - A) / N;
     static int array[N + 2];
     for (int i = 0; i < N + 2; i++) {
         array[i] = 0;
     }
 
     for (int i = 0; i < M; i++) {
-        if (L[i] < a) {
+        if (L[i] < A) {
             array[0]++;
         }
     }
     for (int j = 1; j < N + 1; j++) {
         for (int i = 0; i < M; i++) {
-            if ((a + h * (i - 1) < L[i]) && (L[i] < a + h * i)) {
+            if ((A + h * (j - 1) < L[i]) && (L[i] < A + h * j)) {
                 array[j]++;
             }
         }
     }
     for (int i = 0; i < M; i++) {
-        if (L[i] > b) {
+        if (L[i] > B) {
             array[N + 1]++;
         }
     }
 
     static double PArray[N + 2];
     for (int i = 0; i < N + 2; i++) {
-        PArray[i] = array[i] / M;
+        PArray[i] = array[i] / static_cast<double>(M);
     }
     return PArray;
 }
@@ -167,25 +172,42 @@ double GetPirs(double* P, double* v) {
 
 int main()
 {
-
+    setlocale(LC_ALL, "Russian");
+    double h = (B - A) / N;
     // Теоретические вероятности
     double ProbTheor[N+2];
-    ProbTheor[0] = SympsonIntegral(-10000000, a, N);
-    for (int i = 0; i < 2 * M; i++) {
-        uniform_real_distribution<> dis(0.0, 1.00000000001);
+
+    ProbTheor[0] = SympsonIntegral(-100, A, 0.005);
+
+    for (int i = 1; i < N + 1; i++) {
+        ProbTheor[i] = SympsonIntegral(A + h * (i - 1), A + h * i, 0.005);
     }
+    ProbTheor[N+1] = SympsonIntegral(B, 100, 0.005);
+    cout << ProbTheor[0] << endl;
+    // Для генератора 1
+    double Pirs1 = GetPirs(GetProb(Generator1()), ProbTheor);
+    cout << "Для генератора 1 критерий согласия Пирсона = " << Pirs1 << endl;
+
+    // Для генератора 2
+    double Pirs2 = GetPirs(GetProb(Generator2()), ProbTheor);
+    cout << "Для генератора 2 критерий согласия Пирсона = " << Pirs2 << endl;
+
+    // Для генератора 3
+    double Pirs3 = GetPirs(GetProb(Generator3()), ProbTheor);
+    cout << "Для генератора 3 критерий согласия Пирсона = " << Pirs3 << endl;
 
     // Для генератора 4
     const int k = 100;
     const double phi_0 = 0.0, phi_k = PI;
 
-    double GenSV4[M];
     double Pirs4List[k + 1];
-     
+ 
 
     for (int i = 0; i < k + 1; i++) {
-        GetPirs(GetProb(Generator4(phi_0)),ProbTheor);
+        Pirs4List[i] = GetPirs(GetProb(Generator4(phi_0)), ProbTheor);
     }
+    double Pirs4 = MinElem(Pirs4List, k + 1);
+    cout << "Для генератора 4 критерий согласия Пирсона = " << Pirs4 << endl;
 }
 
 // Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
