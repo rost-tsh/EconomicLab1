@@ -3,10 +3,13 @@
 
 #include <iostream>
 #define _USE_MATH_DEFINES
+
 #include <cmath>
 #include <random>
 
+
 using namespace std;
+
 
 const double PI = 3.141592653589793;
 const double A = -3, B = 3;
@@ -183,6 +186,7 @@ void PrintArray(double* P, int n) {
     }
 }
 
+
 int main()
 {
     setlocale(LC_ALL, "Russian");
@@ -221,6 +225,8 @@ int main()
     }
     double Pirs4 = MinElem(Pirs4List, k + 1);
     cout << "Для генератора 4 критерий согласия Пирсона = " << Pirs4 << endl;
+
+   
 }
 
 // Запуск программы: CTRL+F5 или меню "Отладка" > "Запуск без отладки"
