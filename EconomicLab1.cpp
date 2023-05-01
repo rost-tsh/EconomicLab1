@@ -6,7 +6,8 @@
 
 #include <cmath>
 #include <random>
-
+#include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -56,56 +57,47 @@ double p(double x) {
     return 1 / sqrt(2 * PI) * exp(-x * x / 2);
 }
 
-double MinElem(double* L, int N) {
-    int min = 0;
-    for (int i = 1; i < N; i++)
-    {
-        if (L[min] > L[i]) min = i;
-    }
-    return L[min];
-}
-
-double *Generator1() {
-    static double array[M];
+ vector<double >Generator1() {
+    vector<double> array;
     double NewSv;
     random_device rd;
     mt19937 gen(rd());
     uniform_real_distribution<> dis(0, 1);
-    for (int i = 0; i < size(array); i++) {
+    for (int i = 0; i < M; i++) {
         NewSv = 0;
         for (int j = 0; j < 12; j++) {
             NewSv += dis(gen);
         }
         NewSv -= 6;
-        array[i] = NewSv;
+        array.push_back(NewSv);
     }
     return array;
 }
 
-double* Generator2() {
-    static double array[M];
+vector<double> Generator2() {
+    vector<double> array;
 
     random_device rd;
     mt19937 gen(rd());
     uniform_real_distribution<> dis(E, 1);
     double NewGr1, NewGr2;
-    for (int i = 0; i < size(array); i+=2) {
+    for (int i = 0; i < M; i+=2) {
         NewGr1 = dis(gen); NewGr2 = dis(gen);
-        array[i] = cos(2 * PI * NewGr1) * sqrt(-2 * log(NewGr2));
-        array[i + 1] = sin(2 * PI * NewGr1) * sqrt(-2 * log(NewGr2));
+        array.push_back(cos(2 * PI * NewGr1) * sqrt(-2 * log(NewGr2)));
+        array.push_back(sin(2 * PI * NewGr1) * sqrt(-2 * log(NewGr2)));
         
     }
     return array;
 }
 
-double* Generator3() {
-    static double array[M];
+vector<double> Generator3() {
+    vector<double> array;
     double s;
     random_device rd;
     mt19937 gen(rd());
     uniform_real_distribution<> dis(-1, 1);
     double NewGr1, NewGr2;
-    for (int i = 0; i < size(array); i += 2) {
+    for (int i = 0; i < M; i += 2) {
         s = E;
         NewGr1 = dis(gen); NewGr2 = dis(gen);
         if (abs(NewGr1 - NewGr2) >= E) {
@@ -115,64 +107,64 @@ double* Generator3() {
         if (abs(s - 1) < E) {
             s = 1;
         }
-        array[i] = NewGr1 * sqrt(-2 * log(s) / s);
-        array[i + 1] = NewGr2 * sqrt(-2 * log(s) / s);
+        array.push_back(NewGr1 * sqrt(-2 * log(s) / s));
+        array.push_back(NewGr2 * sqrt(-2 * log(s) / s));
     }
     return array;
 }
 
-double* Generator4(double phi) {
-    static double array[M];
-    double s = E;
+vector<double> Generator4(double phi) {
+    vector<double> array;
     random_device rd;
     mt19937 gen(rd());
     uniform_real_distribution<> dis(E, 1-E);
     double NewGr1, NewGr2;
-    for (int i = 0; i < size(array); i++) {
+    for (int i = 0; i < M; i++) {
         NewGr1 = dis(gen); NewGr2 = dis(gen);
-        array[i] = sqrt(-2 * log(NewGr2)) * cos(2 * PI * NewGr1 - phi);
+        array.push_back(sqrt(-2 * log(NewGr2)) * cos(2 * PI * NewGr1 - phi));
         
     }
     return array;
 }
 
-int* GetM(double* L) {
+vector<int> GetM(vector<double> L) {
     double h = (B - A) / N;
-    static int array[N + 2];
-    for (int i = 0; i < size(array); i++) {
-        array[i] = 0;
-    }
+    vector<int> array(N+2);
+    sort(L.begin(), L.end());
 
+    int j = 0;
     for (int i = 0; i < M; i++) {
-        if (L[i] <= A) {
-            array[0]++;
+        if (j == 0) {
+            if (L[i] <= A) {
+                array[j]++;
+            }
+            else {
+                j++;
+            }
         }
-    }
-    for (int j = 1; j < size(array) - 1; j++) {
-        for (int i = 0; i < M; i++) {
-            if ((A + h * (j - 1) <= L[i]) && (L[i] < A + h * j)) {
+        else if (j == N + 1) {
+            if (L[i] >= B) {
                 array[j]++;
             }
         }
-    }
-    for (int i = 0; i < M; i++) {
-        if (L[i] >= B) {
-            array[size(array) - 1]++;
+        else if ((A + h * (j - 1) <= L[i]) && (L[i] < A + h * j)) {
+            array[j]++;
         }
+        else j++;
     }
     return array;
 }
 
-double* GetProb(double* L) {
-    int* array = GetM(L);
-    static double PArray[N + 2];
+vector<double> GetProb(vector<double> L) {
+    vector<int> array = GetM(L);
+    vector<double> PArray(N + 2);
     for (int i = 0; i < N + 2; i++) {
         PArray[i] = (double)array[i] / (double)(M);
     }
     return PArray;
 }
 
-double GetPirs(double* P, double* v) {
+double GetPirs(vector<double> P, vector<double> v) {
     double Sum1 = 0;
     for (int i = 0; i < N + 2; i++) {
         Sum1 += (P[i] - v[i]) * (P[i] - v[i]) / v[i];
@@ -180,9 +172,9 @@ double GetPirs(double* P, double* v) {
     return M * Sum1;
 }
 
-void PrintArray(double* P, int n) {
-    for (int i = 0; i < n; i++) {
-        cout << P[i] << endl;
+void PrintVector(vector<double> P) {
+    for (auto& v : P) {
+        cout << v << " ";
     }
 }
 
@@ -191,17 +183,16 @@ int main()
 {
     setlocale(LC_ALL, "Russian");
     double h = (B - A) / N;
-    static double array[M];
 
     // Теоретические вероятности
-    static double ProbTheor[N+2];
+    vector<double> ProbTheor;
 
-    ProbTheor[0] = SympsonIntegral(-100, A, 0.005);
+    ProbTheor.push_back(SympsonIntegral(-100, A, 0.005));
 
     for (int i = 1; i < N + 1; i++) {
-        ProbTheor[i] = SympsonIntegral(A + h * (i - 1), A + h * i, 0.005);
+        ProbTheor.push_back(SympsonIntegral(A + h * (i - 1), A + h * i, 0.005));
     }
-    ProbTheor[N+1] = SympsonIntegral(B, 100, 0.005);
+    ProbTheor.push_back(SympsonIntegral(B, 100, 0.005));
 
     // Для генератора 1
     double Pirs1 = GetPirs(GetProb(Generator1()), ProbTheor);
@@ -219,11 +210,12 @@ int main()
     const int k = 100;
     const double phi_0 = 0.0, phi_k = PI;
     double phi_h = (phi_k - phi_0) / k;
-    double Pirs4List[k + 1];
+    vector<double> Pirs4List;
     for (int i = 0; i < k + 1; i++) {
-        Pirs4List[i] = GetPirs(GetProb(Generator4(phi_0 + phi_h * i)), ProbTheor);
+        Pirs4List.push_back(GetPirs(GetProb(Generator4(phi_0 + phi_h * i)), ProbTheor));
     }
-    double Pirs4 = MinElem(Pirs4List, k + 1);
+    sort(Pirs4List.begin(), Pirs4List.end());
+    double Pirs4 = Pirs4List[0];
     cout << "Для генератора 4 критерий согласия Пирсона = " << Pirs4 << endl;
 
    
